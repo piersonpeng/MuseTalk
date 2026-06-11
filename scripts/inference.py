@@ -55,16 +55,19 @@ def main(args):
         vae.vae = vae.vae.half()
         unet.model = unet.model.half()
     
-    # Move models to specified device
+    # Move models to specified device.
+    # 8GB VRAM safety net: keep big models (vae, unet) on CPU when idle
+    # and only stream them to GPU during their forward pass. pe and the
+    # audio encoder are tiny, so they live on GPU/CPU directly.
     pe = pe.to(device)
-    vae.vae = vae.vae.to(device)
-    unet.model = unet.model.to(device)
-        
+    vae.vae.enable_model_cpu_offload(gpu_id=args.gpu_id)
+    unet.model.enable_model_cpu_offload(gpu_id=args.gpu_id)
+
     # Initialize audio processor and Whisper model
     audio_processor = AudioProcessor(feature_extractor_path=args.whisper_dir)
     weight_dtype = unet.model.dtype
     whisper = WhisperModel.from_pretrained(args.whisper_dir)
-    whisper = whisper.to(device=device, dtype=weight_dtype).eval()
+    whisper = whisper.to(device="cpu", dtype=weight_dtype).eval()
     whisper.requires_grad_(False)
     
     # Initialize face parser with configurable parameters based on version
