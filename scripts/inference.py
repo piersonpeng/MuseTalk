@@ -12,7 +12,6 @@ import subprocess
 from tqdm import tqdm
 from omegaconf import OmegaConf
 from transformers import WhisperModel
-from accelerate import cpu_offload_with_hook
 import sys
 
 from musetalk.utils.blending import get_image
@@ -61,13 +60,8 @@ def main(args):
     # and only stream them to GPU during their forward pass. pe and the
     # audio encoder are tiny, so they live on GPU/CPU directly.
     pe = pe.to(device)
-    # diffusers 0.30 only exposes `enable_model_cpu_offload` as a method on
-    # DiffusionPipeline, not as a standalone helper. For individually loaded
-    # components (MuseTalk style), use accelerate's `cpu_offload_with_hook`
-    # directly — it's the same primitive diffusers uses internally.
-    prev_hook = None
-    vae.vae, prev_hook = cpu_offload_with_hook(vae.vae, device, prev_module_hook=prev_hook)
-    unet.model, prev_hook = cpu_offload_with_hook(unet.model, device, prev_module_hook=prev_hook)
+    vae.vae = vae.vae.to(device)
+    unet.model = unet.model.to(device)
 
     # Initialize audio processor and Whisper model
     audio_processor = AudioProcessor(feature_extractor_path=args.whisper_dir)

@@ -139,14 +139,15 @@ ${GREEN}========== 安装完成 ==========${NC}
      编辑 scripts/inference.py 或 scripts/realtime_inference.py，
      在模型加载完成后加:
 
-         from accelerate import cpu_offload_with_hook
-         # diffusers 0.30 only has enable_model_cpu_offload on the
-         # pipeline class. For individually-loaded components use
-         # accelerate's cpu_offload_with_hook directly (the primitive
-         # diffusers uses internally).
-         prev_hook = None
-         vae.vae, prev_hook = cpu_offload_with_hook(vae.vae, device, prev_module_hook=prev_hook)
-         unet.model, prev_hook = cpu_offload_with_hook(unet.model, device, prev_module_hook=prev_hook)
+         # diffusers 0.30's `enable_model_cpu_offload` only lives on the
+         # pipeline class; for individually-loaded components the
+         # `cpu_offload_with_hook` workaround failed in practice (hook
+         # didn't reach nested submodules → weight/input device mismatch).
+         # Simplest reliable path: keep all 3 on GPU in fp16 — fits in
+         # 8GB on RTX 4060 with batch_size ≤ 2. If you OOM, drop
+         # --batch_size to 1 or use --extra_margin to reduce crop size.
+         vae.vae = vae.vae.to(device)
+         unet.model = unet.model.to(device)
          whisper.to("cpu")                                              # whisper-tiny 很小，永久 CPU 即可
 
      预期 VRAM 占用从 ~6-8GB 降到 ~3-4GB，速度降到 3-5 fps
