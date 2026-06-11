@@ -139,9 +139,14 @@ ${GREEN}========== 安装完成 ==========${NC}
      编辑 scripts/inference.py 或 scripts/realtime_inference.py，
      在模型加载完成后加:
 
-         from diffusers.utils import enable_model_cpu_offload
-         vae.vae = enable_model_cpu_offload(vae.vae, gpu_id=0)         # VAE 推完即换出
-         unet.model = enable_model_cpu_offload(unet.model, gpu_id=0)   # UNet 是大头
+         from accelerate import cpu_offload_with_hook
+         # diffusers 0.30 only has enable_model_cpu_offload on the
+         # pipeline class. For individually-loaded components use
+         # accelerate's cpu_offload_with_hook directly (the primitive
+         # diffusers uses internally).
+         prev_hook = None
+         vae.vae, prev_hook = cpu_offload_with_hook(vae.vae, device, prev_module_hook=prev_hook)
+         unet.model, prev_hook = cpu_offload_with_hook(unet.model, device, prev_module_hook=prev_hook)
          whisper.to("cpu")                                              # whisper-tiny 很小，永久 CPU 即可
 
      预期 VRAM 占用从 ~6-8GB 降到 ~3-4GB，速度降到 3-5 fps
