@@ -1,0 +1,33 @@
+defaults:
+  output_root: results/cartoon_lipsync
+  fps: 25
+  prepare_only: false
+  model:
+    version: v15
+    use_float16: true
+    unet_model_path: models/musetalkV15/unet.pth
+    unet_config: models/musetalkV15/musetalk.json
+    whisper_dir: models/whisper
+    batch_size: 8
+  crop:
+    model_size: 512
+    expansion: 2.2
+    center_y_offset_ratio: 0.10
+    min_face_width_px: 120
+    min_crop_size_px: 256
+  mask:
+    type: elliptical_lower_face
+    feather_px: 30
+    mouth_center_y_ratio: 0.68
+    axes_x_ratio: 0.72
+    axes_y_ratio: 0.42
+  speaker:
+    mode: region
+    face_bbox: [812, 459, 972, 657]
+    x_range: [0.20, 0.42]
+    y_range: [0.20, 0.52]
+
+jobs:
+  - job_id: ep02_first_night_int1_007_emma
+    source_image: /Users/pierson/project/prompt-engineering/scenes/ep02-first-night/INT1.jpg
+    audio_path: /Users/pierson/project/prompt-engineering/scenes/ep02-first-night/audio/007_Emma.mp3
