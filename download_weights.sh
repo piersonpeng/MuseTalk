@@ -7,8 +7,9 @@ CheckpointsDir="models"
 mkdir -p models/musetalk models/musetalkV15 models/syncnet models/dwpose models/face-parse-bisent models/sd-vae models/whisper
 
 # Install required packages
-pip install -U "huggingface_hub[cli]"
-pip install gdown
+# 注意：不要在这里 -U 升级 huggingface_hub！
+# requirements.txt 锁在 0.30.2，升到 1.x 会跟 transformers 4.39.2 冲突
+# pip install gdown  # 已在 requirements.txt
 
 # Set HuggingFace mirror endpoint
 export HF_ENDPOINT=https://hf-mirror.com
@@ -44,8 +45,19 @@ huggingface-cli download ByteDance/LatentSync \
   --include "latentsync_syncnet.pt"
 
 # Download Face Parse Bisent weights
-gdown --id 154JgKpzCPW82qINcVieuPH3fZ2e0P812 -O $CheckpointsDir/face-parse-bisent/79999_iter.pth
+# gdown 6.x 不再支持 --id，直接传 ID
+gdown 154JgKpzCPW82qINcVieuPH3fZ2e0P812 -O $CheckpointsDir/face-parse-bisent/79999_iter.pth
 curl -L https://download.pytorch.org/models/resnet18-5c106cde.pth \
   -o $CheckpointsDir/face-parse-bisent/resnet18-5c106cde.pth
 
-echo "✅ All weights have been downloaded successfully!" 
+# 校验：每个目录都得有 .bin / .pth / .pt 文件
+echo ""
+echo "=== 校验权重 ==="
+for d in musetalk musetalkV15 syncnet dwpose face-parse-bisent sd-vae whisper; do
+    count=$(find "$CheckpointsDir/$d" -maxdepth 2 -type f \( -name "*.bin" -o -name "*.pth" -o -name "*.pt" -o -name "*.json" \) 2>/dev/null | wc -l)
+    if [ "$count" -gt 0 ]; then
+        echo "  [✓] $d : $count 个文件"
+    else
+        echo "  [✗] $d : 空！需要重新下载"
+    fi
+done
