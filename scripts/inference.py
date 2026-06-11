@@ -12,6 +12,7 @@ import subprocess
 from tqdm import tqdm
 from omegaconf import OmegaConf
 from transformers import WhisperModel
+from diffusers.utils import enable_model_cpu_offload
 import sys
 
 from musetalk.utils.blending import get_image
@@ -60,8 +61,8 @@ def main(args):
     # and only stream them to GPU during their forward pass. pe and the
     # audio encoder are tiny, so they live on GPU/CPU directly.
     pe = pe.to(device)
-    vae.vae.enable_model_cpu_offload(gpu_id=args.gpu_id)
-    unet.model.enable_model_cpu_offload(gpu_id=args.gpu_id)
+    vae.vae = enable_model_cpu_offload(vae.vae, gpu_id=args.gpu_id)
+    unet.model = enable_model_cpu_offload(unet.model, gpu_id=args.gpu_id)
 
     # Initialize audio processor and Whisper model
     audio_processor = AudioProcessor(feature_extractor_path=args.whisper_dir)

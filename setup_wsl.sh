@@ -140,9 +140,9 @@ ${GREEN}========== 安装完成 ==========${NC}
      在模型加载完成后加:
 
          from diffusers.utils import enable_model_cpu_offload
-         vae.enable_model_cpu_offload()       # VAE 推完即换出
-         unet.enable_model_cpu_offload()      # UNet 是大头
-         whisper.to("cpu")                    # whisper-tiny 很小，永久 CPU 即可
+         vae.vae = enable_model_cpu_offload(vae.vae, gpu_id=0)         # VAE 推完即换出
+         unet.model = enable_model_cpu_offload(unet.model, gpu_id=0)   # UNet 是大头
+         whisper.to("cpu")                                              # whisper-tiny 很小，永久 CPU 即可
 
      预期 VRAM 占用从 ~6-8GB 降到 ~3-4GB，速度降到 3-5 fps
      （纯 GPU 跑 4060 一般 15-25 fps）。短切片离线推理完全够用。
