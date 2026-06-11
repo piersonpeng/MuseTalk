@@ -18,3 +18,11 @@ imageio[ffmpeg]
 omegaconf
 ffmpeg-python
 moviepy
+
+# Face detector used by musetalk/utils/preprocessing.py (FaceAlignment / LandmarksType)
+face-detection
+
+# Landmark/pose detection (mmpose) is intentionally NOT pinned here:
+# install it via openmim, not pip, because mmpose needs matching mmcv/mmengine
+# wheels per torch+Cuda combo. See setup_wsl.sh for the install command.
+
