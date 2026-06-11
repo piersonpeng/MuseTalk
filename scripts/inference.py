@@ -49,19 +49,15 @@ def main(args):
     )
     timesteps = torch.tensor([0], device=device)
 
-    # Convert models to half precision if float16 is enabled
+    # Convert models to half precision and move to device
     if args.use_float16:
-        pe = pe.half()
-        vae.vae = vae.vae.half()
-        unet.model = unet.model.half()
-    
-    # Move models to specified device.
-    # 8GB VRAM safety net: keep big models (vae, unet) on CPU when idle
-    # and only stream them to GPU during their forward pass. pe and the
-    # audio encoder are tiny, so they live on GPU/CPU directly.
-    pe = pe.to(device)
-    vae.vae = vae.vae.to(device)
-    unet.model = unet.model.to(device)
+        pe = pe.half().to(device)
+        vae.vae = vae.vae.half().to(device)
+        unet.model = unet.model.half().to(device)
+    else:
+        pe = pe.to(device)
+        vae.vae = vae.vae.to(device)
+        unet.model = unet.model.to(device)
 
     # Initialize audio processor and Whisper model
     audio_processor = AudioProcessor(feature_extractor_path=args.whisper_dir)
